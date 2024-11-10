@@ -2,7 +2,7 @@ const { nanoid } = require('nanoid');
 const books = require('./books');
 
 const addBookHandler = function(request,h){
-    const {name, year, author, summary, publisher, pageCount, readPage, reading} = request.payload;
+    const {name, year, author, summary, publisher, pageCount, readPage,reading} = request.payload;
     if (name == null || name == undefined ) {
         const response =  h.response({
             status: "fail",
@@ -25,7 +25,9 @@ const addBookHandler = function(request,h){
     const insertedAt = new Date().toISOString();
     const updatedAt = insertedAt;
 
-    const newBook = {id, name , year, author, summary, publisher, pageCount, readPage, reading, insertedAt,updatedAt};
+    const isFinished = readPage === pageCount;
+
+    const newBook = {id, name , year, author, summary, publisher, pageCount, readPage, finished: isFinished,reading, insertedAt,updatedAt};
     
     books.push(newBook);
     const isSuccess = books.filter(function(book){
@@ -54,12 +56,15 @@ const addBookHandler = function(request,h){
 };
 
 const getAllBookHandler = function(request,h){
+    const getBooks = books.map(function(book){
+        return {id: book.id, name: book.name, publisher: book.publisher}
+    })
     const response = h.response(
         {
             status: "success",
             message : "Buku berhasil didapatkan",
             data : {
-                books
+                books : getBooks
             }
         }
     )
@@ -68,31 +73,30 @@ const getAllBookHandler = function(request,h){
 };
 
 
-const getBookByIdHandler = function(request,h){
-    const {bookId} = request.params;
+const getBookByIdHandler = function(request, h) {
+    const { bookId } = request.params;
 
-    const book = books.filter(function(book){
-        return book.id == bookId;
-    })[0];
+    const book = books.find(book => book.id === bookId);
 
     if (book) {
         return h.response({
             status: "success",
-            data : {
+            data: {
                 book
             }
         }).code(200);
-    }else{
+    } else {
         return h.response({
-             "status": "fail",
-             "message": "Buku tidak ditemukan"
-        }).code(400);
+            status: "fail",
+            message: "Buku tidak ditemukan"
+        }).code(404);
     }
 };
 
+
 const editBookByIdHandler = function(request,h){
     const {bookId} = request.params;
-    const {name, year, author, summary, publisher, pageCount, readPage, reading} = request.payload;
+    const {name, year, author, summary, publisher, pageCount, readPage,reading} = request.payload;
     const updatedAt = new Date().toISOString();
 
     const index = books.findIndex(function(book){
@@ -122,6 +126,9 @@ const editBookByIdHandler = function(request,h){
         response.code(404)
         return response
     }else if(index !== -1){
+
+        const isFinished = readPage === pageCount;
+        
         books[index] = {
             ...books[index],
             name,
@@ -131,6 +138,7 @@ const editBookByIdHandler = function(request,h){
             publisher,
             pageCount,
             readPage,
+            finished : isFinished,
             reading,
             updatedAt
         }
@@ -154,7 +162,7 @@ const deleteBookByIdHandler = function(request,h){
     if (index == -1) {
         const response = h.response({
             "status": "fail",
-            "message": "Gagal memperbarui buku. Id tidak ditemukan"
+            "message": "Buku gagal dihapus. Id tidak ditemukan"
         })
         response.code(404)
         return response
