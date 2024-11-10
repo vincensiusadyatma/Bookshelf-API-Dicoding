@@ -55,19 +55,43 @@ const addBookHandler = function(request,h){
 
 };
 
-const getAllBookHandler = function(request,h){
-    const getBooks = books.map(function(book){
-        return {id: book.id, name: book.name, publisher: book.publisher}
-    })
-    const response = h.response(
-        {
-            status: "success",
-            message : "Buku berhasil didapatkan",
-            data : {
-                books : getBooks
-            }
+const getAllBookHandler = function(request, h) {
+    let getBooks = books; 
+
+    if (request.query.name) {
+        const nameQuery = request.query.name.toLowerCase();
+        getBooks = getBooks.filter(book =>
+            book.name.toLowerCase().includes(nameQuery)
+        );
+    }
+  
+    else if (request.query.reading) {
+        const readingQuery = parseInt(request.query.reading);
+        getBooks = getBooks.filter(book =>
+            book.reading === Boolean(readingQuery)
+        );
+    }
+ 
+    else if (request.query.finished) {
+        const finishedQuery = parseInt(request.query.finished);
+        getBooks = getBooks.filter(book =>
+            book.finished === Boolean(finishedQuery)
+        );
+    }
+
+
+    const transformedBooks = getBooks.map(function(book) {
+        return { id: book.id, name: book.name, publisher: book.publisher };
+    });
+
+    // Prepare the response
+    const response = h.response({
+        status: "success",
+        message: "Buku berhasil didapatkan",
+        data: {
+            books: transformedBooks
         }
-    )
+    });
 
     return response;
 };
@@ -128,7 +152,7 @@ const editBookByIdHandler = function(request,h){
     }else if(index !== -1){
 
         const isFinished = readPage === pageCount;
-        
+
         books[index] = {
             ...books[index],
             name,
