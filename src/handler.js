@@ -84,7 +84,7 @@ const getAllBookHandler = function(request, h) {
         return { id: book.id, name: book.name, publisher: book.publisher };
     });
 
-    // Prepare the response
+  
     const response = h.response({
         status: "success",
         message: "Buku berhasil didapatkan",
